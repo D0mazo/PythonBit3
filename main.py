@@ -33,8 +33,8 @@ if prompt := st.chat_input("Type your message here..."):
     # NEW: Check for stop command
     if prompt.strip().upper() == "STOP_PROGRAM":
         st.warning("Program stopping...")
-        st.stop()  # Stops the Streamlit execution
-        sys.exit(0)  # Ensures complete program termination
+        st.stop()  
+        sys.exit(0)  
     
     # Add user message to history
     st.session_state.messages.append({"role": "user", "content": prompt})
