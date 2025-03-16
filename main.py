@@ -31,7 +31,7 @@ for message in st.session_state.messages[1:]:  # Skip system message
 # User input
 if prompt := st.chat_input("Type your message here..."):
     # NEW: Check for stop command
-    if prompt.strip().upper() == "STOP_PROGRAM":
+    if prompt.strip().upper() == "STOPP":
         st.warning("Program stopping...")
         st.stop()  
         sys.exit(0)  
