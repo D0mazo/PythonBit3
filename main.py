@@ -20,7 +20,7 @@ st.title("Chat Assistant - Powered by GPT-4o")
 # Initialize chat history in session state
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "You are Grok 3, a helpful AI assistant built by xAI."}
+        {"role": "system", "content": "AI"}
     ]
 
 # Display chat history
@@ -65,6 +65,6 @@ if prompt := st.chat_input("Type your message here..."):
 # Clear chat button
 if st.button("Clear Chat"):
     st.session_state.messages = [
-        {"role": "system", "content": "You are Grok 3, a helpful AI assistant built by xAI."}
+        {"role": "system", "content": "AI"}
     ]
     st.rerun()
