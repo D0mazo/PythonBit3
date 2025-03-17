@@ -15,7 +15,7 @@ client = OpenAI(
 )
 
 # Streamlit interface
-st.title("Chat Assistant - Powered by GPT-4o")
+st.title("BEST AND ONLY FRIEND")
 
 # Initialize chat history in session state
 if "messages" not in st.session_state:
