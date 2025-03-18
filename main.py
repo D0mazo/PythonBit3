@@ -69,7 +69,7 @@ if prompt := st.chat_input("Type your message here..."):
     
     # Get and display AI response
     try:
-        with st.spinner("Analyzing PDFs and generating response..."):
+        with st.spinner("Thinking..."):
             # Combine all PDF contents for context with analysis instructions
             if st.session_state.pdf_contents:
                 combined_pdf_content = "\n\n".join(
