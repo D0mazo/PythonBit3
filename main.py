@@ -85,7 +85,7 @@ if prompt := st.chat_input("Type your message here..."):
     
     # Get and display AI response
     try:
-        with st.spinner("Analyzing PDFs and generating response..."):
+        with st.spinner("Thinking..."):
             # Read previous chat history from the log file
             chat_history = read_chat_history()
             
