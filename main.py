@@ -23,11 +23,11 @@ if not os.path.exists(SAVE_DIR):
 # Streamlit interface
 st.title("BEST AND ONLY FRIEND")
 
-# Initialize chat history and PDF content in session state
+# Initialize chat history and PDF content dictionary in session state
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": "AI"}]
-if "pdf_content" not in st.session_state:
-    st.session_state.pdf_content = ""
+if "pdf_contents" not in st.session_state:
+    st.session_state.pdf_contents = {}  # Dictionary to store PDF contents with filenames as keys
 
 # PDF upload feature
 uploaded_file = st.file_uploader("Upload a PDF to enhance responses", type="pdf")
@@ -42,8 +42,10 @@ if uploaded_file is not None:
     pdf_text = ""
     for page in pdf_reader.pages:
         pdf_text += page.extract_text() or ""
-    st.session_state.pdf_content = pdf_text
-    st.success(f"PDF uploaded and saved to {file_path}! I'll use its content to inform my responses.")
+    
+    # Store PDF content in session state with filename as key
+    st.session_state.pdf_contents[uploaded_file.name] = pdf_text
+    st.success(f"PDF '{uploaded_file.name}' uploaded and saved to {file_path}! I'll use all uploaded PDFs to inform my responses.")
 
 # Display chat history
 for message in st.session_state.messages[1:]:  # Skip system message
@@ -67,11 +69,19 @@ if prompt := st.chat_input("Type your message here..."):
     # Get and display AI response
     try:
         with st.spinner("Thinking..."):
-            if st.session_state.pdf_content:
+            # Combine all PDF contents for context
+            if st.session_state.pdf_contents:
+                combined_pdf_content = "\n\n".join(
+                    f"Content from {filename}:\n{content}"
+                    for filename, content in st.session_state.pdf_contents.items()
+                )
+                # Limit context to 2000 characters to avoid token overflow, adjust as needed
                 st.session_state.messages[0] = {
                     "role": "system",
-                    "content": f"AI with PDF context: {st.session_state.pdf_content[:2000]}"
+                    "content": f"AI with PDF context from all uploaded files:\n{combined_pdf_content[:2000]}"
                 }
+            else:
+                st.session_state.messages[0] = {"role": "system", "content": "AI"}
             
             completion = client.chat.completions.create(
                 model="gpt-4o",
@@ -92,5 +102,5 @@ if prompt := st.chat_input("Type your message here..."):
 # Clear chat button
 if st.button("Clear Chat"):
     st.session_state.messages = [{"role": "system", "content": "AI"}]
-    st.session_state.pdf_content = ""
+    st.session_state.pdf_contents = {}
     st.rerun()
