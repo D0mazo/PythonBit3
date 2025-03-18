@@ -29,8 +29,9 @@ if "messages" not in st.session_state:
 if "pdf_contents" not in st.session_state:
     st.session_state.pdf_contents = {}  # Dictionary to store PDF contents with filenames as keys
 
+
 # PDF upload feature
-uploaded_file = st.file_uploader("Upload a PDF to enhance responses", type="pdf")
+uploaded_file = st.file_uploader("Upload a PDF", type="pdf")  # Simplified label
 if uploaded_file is not None:
     # Save the PDF to disk
     file_path = os.path.join(SAVE_DIR, uploaded_file.name)
