@@ -3,7 +3,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import sys
-import PyPDF2  # NEW: For reading PDF files
+import PyPDF2
 
 # Load environment variables
 load_dotenv()
@@ -14,6 +14,11 @@ client = OpenAI(
     base_url="https://models.inference.ai.azure.com",
     api_key=api_key
 )
+
+# Directory to save PDFs (create if it doesn’t exist)
+SAVE_DIR = "uploaded_pdfs"
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
 
 # Streamlit interface
 st.title("BEST AND ONLY FRIEND")
@@ -27,13 +32,18 @@ if "pdf_content" not in st.session_state:
 # PDF upload feature
 uploaded_file = st.file_uploader("Upload a PDF to enhance responses", type="pdf")
 if uploaded_file is not None:
+    # Save the PDF to disk
+    file_path = os.path.join(SAVE_DIR, uploaded_file.name)
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    
     # Read PDF content
     pdf_reader = PyPDF2.PdfReader(uploaded_file)
     pdf_text = ""
     for page in pdf_reader.pages:
         pdf_text += page.extract_text() or ""
     st.session_state.pdf_content = pdf_text
-    st.success("PDF uploaded successfully! I'll use its content to inform my responses.")
+    st.success(f"PDF uploaded and saved to {file_path}! I'll use its content to inform my responses.")
 
 # Display chat history
 for message in st.session_state.messages[1:]:  # Skip system message
@@ -57,11 +67,10 @@ if prompt := st.chat_input("Type your message here..."):
     # Get and display AI response
     try:
         with st.spinner("Thinking..."):
-            # Include PDF content in the system message if available
             if st.session_state.pdf_content:
                 st.session_state.messages[0] = {
                     "role": "system",
-                    "content": f"AI with PDF context: {st.session_state.pdf_content[:2000]}"  # Limit to avoid token overflow
+                    "content": f"AI with PDF context: {st.session_state.pdf_content[:2000]}"
                 }
             
             completion = client.chat.completions.create(
@@ -83,5 +92,5 @@ if prompt := st.chat_input("Type your message here..."):
 # Clear chat button
 if st.button("Clear Chat"):
     st.session_state.messages = [{"role": "system", "content": "AI"}]
-    st.session_state.pdf_content = ""  # Reset PDF content too
+    st.session_state.pdf_content = ""
     st.rerun()
