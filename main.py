@@ -45,7 +45,7 @@ if uploaded_file is not None:
     
     # Store PDF content in session state with filename as key
     st.session_state.pdf_contents[uploaded_file.name] = pdf_text
-    st.success(f"PDF '{uploaded_file.name}' uploaded and saved to {file_path}! I'll use all uploaded PDFs to inform my responses.")
+    st.success(f"PDF '{uploaded_file.name}' uploaded and saved to {file_path}! I'll analyze all uploaded PDFs for my responses.")
 
 # Display chat history
 for message in st.session_state.messages[1:]:  # Skip system message
@@ -68,26 +68,32 @@ if prompt := st.chat_input("Type your message here..."):
     
     # Get and display AI response
     try:
-        with st.spinner("Thinking..."):
-            # Combine all PDF contents for context
+        with st.spinner("Analyzing PDFs and generating response..."):
+            # Combine all PDF contents for context with analysis instructions
             if st.session_state.pdf_contents:
                 combined_pdf_content = "\n\n".join(
                     f"Content from {filename}:\n{content}"
                     for filename, content in st.session_state.pdf_contents.items()
                 )
-                # Limit context to 2000 characters to avoid token overflow, adjust as needed
+                # Increase context limit and add analysis instruction
+                system_prompt = (
+                    "You are an AI designed to analyze and compare content from multiple PDFs. "
+                    "Use the following content from all uploaded PDFs to inform your response. "
+                    "If the user asks for comparisons, summaries, or specific insights, analyze the PDFs accordingly.\n\n"
+                    f"{combined_pdf_content[:4000]}"  # Increased to 4000 characters, adjust as needed
+                )
+                st.session_state.messages[0] = {"role": "system", "content": system_prompt}
+            else:
                 st.session_state.messages[0] = {
                     "role": "system",
-                    "content": f"AI with PDF context from all uploaded files:\n{combined_pdf_content[:2000]}"
+                    "content": "You are an AI assistant. No PDFs have been uploaded yet."
                 }
-            else:
-                st.session_state.messages[0] = {"role": "system", "content": "AI"}
             
             completion = client.chat.completions.create(
                 model="gpt-4o",
                 messages=st.session_state.messages,
                 temperature=0.7,
-                max_tokens=1000
+                max_tokens=1500  # Increased for more detailed responses
             )
         
         response = completion.choices[0].message.content
