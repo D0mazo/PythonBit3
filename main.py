@@ -34,7 +34,7 @@ def read_chat_history():
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r", encoding="utf-8") as f:
             return f.read()
-    return ""
+    return "No previous chat history available."
 
 # Streamlit interface
 st.title("BEST AND ONLY FRIEND")
@@ -54,17 +54,24 @@ if uploaded_file is not None:
         f.write(uploaded_file.getbuffer())
     
     # Read PDF content
-    pdf_reader = PyPDF2.PdfReader(uploaded_file)
-    pdf_text = ""
-    for page in pdf_reader.pages:
-        pdf_text += page.extract_text() or ""
-    
-    # Store PDF content in session state with filename as key
-    st.session_state.pdf_contents[uploaded_file.name] = pdf_text
-    st.write(f"PDF '{uploaded_file.name}' uploaded.")
+    try:
+        pdf_reader = PyPDF2.PdfReader(uploaded_file)
+        pdf_text = ""
+        for page in pdf_reader.pages:
+            extracted_text = page.extract_text()
+            if extracted_text:
+                pdf_text += extracted_text + "\n"
+        if not pdf_text:
+            pdf_text = "No text could be extracted from the PDF."
+        
+        # Store PDF content in session state with filename as key
+        st.session_state.pdf_contents[uploaded_file.name] = pdf_text
+        st.write(f"PDF '{uploaded_file.name}' uploaded successfully.")
+    except Exception as e:
+        st.error(f"Error processing PDF: {str(e)}")
 
-# Display chat history
-for message in st.session_state.messages[1:]:
+# Display chat history (only in-memory messages)
+for message in st.session_state.messages[1:]:  # Skip system message
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
@@ -89,7 +96,7 @@ if prompt := st.chat_input("Type your message here..."):
             # Read previous chat history from the log file
             chat_history = read_chat_history()
             
-            # Combine PDF contents and chat history for context
+            # Combine PDF contents for context
             if st.session_state.pdf_contents:
                 combined_pdf_content = "\n\n".join(
                     f"Content from {filename}:\n{content}"
@@ -98,15 +105,18 @@ if prompt := st.chat_input("Type your message here..."):
             else:
                 combined_pdf_content = "No PDFs uploaded yet."
             
+            # Enhanced system prompt for RAG
             system_prompt = (
-                "You are an AI designed to analyze and compare content from multiple PDFs and past conversations. "
-                "Use the following content from all uploaded PDFs and previous chat history to inform your response. "
-                "If the user asks for comparisons, summaries, or specific insights, analyze the PDFs and chat history accordingly.\n\n"
-                f"Previous Chat History:\n{chat_history[:2000]}\n\n"  # Limit chat history to 2000 chars
-                f"PDF Content:\n{combined_pdf_content[:4000]}"  # Limit PDF content to 4000 chars
+                "You are an AI designed to assist users by leveraging past conversations and uploaded PDF content. "
+                "Use the chat history from 'chat_log.txt' and the content of uploaded PDFs to provide informed, context-aware responses. "
+                "If the user requests summaries, comparisons, or insights, analyze the available data accordingly. "
+                "Always prioritize accuracy and relevance based on the provided context.\n\n"
+                f"Previous Chat History (from chat_log.txt):\n{chat_history[-4000:]}\n\n"  # Use last 4000 chars for recency
+                f"PDF Content (from uploaded_pdfs):\n{combined_pdf_content[-6000:]}"  # Use last 6000 chars
             )
             st.session_state.messages[0] = {"role": "system", "content": system_prompt}
             
+            # Call the OpenAI API
             completion = client.chat.completions.create(
                 model="gpt-4o",
                 messages=st.session_state.messages,
@@ -124,8 +134,13 @@ if prompt := st.chat_input("Type your message here..."):
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
-# Clear chat button
+# Clear chat button (resets in-memory messages but keeps logs and PDFs)
 if st.button("Clear Chat"):
-    st.session_state.messages = [{"role": "system", "content": "AI"}]
-    st.session_state.pdf_contents = {}
+    st.session_state.messages = [{"role": "system", "content": "AI"}]  # Reset in-memory messages only
+    st.write("Chat cleared in memory, but logs and PDFs are preserved.")
     st.rerun()
+
+# Optional: Display full chat log on demand
+if st.button("Show Full Chat Log"):
+    full_log = read_chat_history()
+    st.text_area("Full Chat History", full_log, height=300)
