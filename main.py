@@ -111,8 +111,8 @@ if prompt := st.chat_input("Type your message here..."):  # Capture user input f
                 "Use the chat history from 'chat_log.txt' and the content of uploaded PDFs to provide informed, context-aware responses. "  # Instruction for context usage
                 "If the user requests summaries, comparisons, or insights, analyze the available data accordingly. "  # Guidance for specific tasks
                 "Always prioritize accuracy and relevance based on the provided context.\n\n"  # Emphasis on quality
-                f"Previous Chat History (from chat_log.txt):\n{chat_history[-4000:]}\n\n"  # Include last 4000 chars of chat history
-                f"PDF Content (from uploaded_pdfs):\n{combined_pdf_content[-6000:]}"  # Include last 6000 chars of PDF content
+                f"Previous Chat History (from chat_log.txt):\n{chat_history[-2000:]}\n\n"  # Include last 4000 chars of chat history
+                f"PDF Content (from uploaded_pdfs):\n{combined_pdf_content[-4000:]}"  # Include last 6000 chars of PDF content
             )
             st.session_state.messages[0] = {"role": "system", "content": system_prompt}  # Update the system message with the prompt
             
