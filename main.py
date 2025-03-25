@@ -8,6 +8,8 @@ from datetime import datetime
 
 load_dotenv()
 api_key = os.getenv("AZURE_AI_API_KEY")
+VALID_USERNAME = os.getenv("VALID_USERNAME")
+VALID_PASSWORD = os.getenv("VALID_PASSWORD")
 
 client = OpenAI(
     base_url="https://models.inference.ai.azure.com",
@@ -31,94 +33,119 @@ def read_chat_history():
             return f.read()
     return "No previous chat history available."
 
-st.title("BEST AND ONLY FRIEND")
-
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": "AI"}]
-if "pdf_contents" not in st.session_state:
-    st.session_state.pdf_contents = {}
-
-uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
-if uploaded_file is not None:
-    file_path = os.path.join(SAVE_DIR, uploaded_file.name)
-    with open(file_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+def check_login():
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
     
-    try:
-        pdf_reader = PyPDF2.PdfReader(uploaded_file)
-        pdf_text = ""
-        for page in pdf_reader.pages:
-            extracted_text = page.extract_text()
-            if extracted_text:
-                pdf_text += extracted_text + "\n"
-        if not pdf_text:
-            pdf_text = "No text could be extracted from the PDF."
+    if not st.session_state.logged_in:
+        st.title("Login to Chat Bot")
         
-        st.session_state.pdf_contents[uploaded_file.name] = pdf_text
-        st.write(f"PDF '{uploaded_file.name}' uploaded successfully.")
-    except Exception as e:
-        st.error(f"Error processing PDF: {str(e)}")
-
-for message in st.session_state.messages[1:]:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-if prompt := st.chat_input("Type your message here..."):
-    if prompt.strip().upper() == "STOPP":
-        st.warning("Program stopping...")
-        st.stop()
-        sys.exit(0)
-
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    log_to_file("user", prompt)
-    
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    try:
-        with st.spinner("Thinking..."):
-            chat_history = read_chat_history()
-            
-            if st.session_state.pdf_contents:
-                combined_pdf_content = "\n\n".join(
-                    f"Content from {filename}:\n{content}"
-                    for filename, content in st.session_state.pdf_contents.items()
-                )
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        
+        if st.button("Login"):
+            if username == VALID_USERNAME and password == VALID_PASSWORD:
+                st.session_state.logged_in = True
+                st.success("Logged in successfully!")
+                st.rerun()
             else:
-                combined_pdf_content = "No PDFs uploaded yet."
-            
-            system_prompt = (
-                "You are an AI designed to assist users by leveraging past conversations and uploaded PDF content. "
-                "Use the chat history from 'chat_log.txt' and the content of uploaded PDFs to provide informed, context-aware responses. "
-                "If the user requests summaries, comparisons, or insights, analyze the available data accordingly. "
-                "Always prioritize accuracy and relevance based on the provided context.\n\n"
-                f"Previous Chat History (from chat_log.txt):\n{chat_history[-2000:]}\n\n"
-                f"PDF Content (from uploaded_pdfs):\n{combined_pdf_content[-4000:]}"
-            )
-            st.session_state.messages[0] = {"role": "system", "content": system_prompt}
-            
-            completion = client.chat.completions.create(
-                model="gpt-4o",
-                messages=st.session_state.messages,
-                temperature=0.7,
-                max_tokens=1500
-            )
+                st.error("Invalid username or password")
+        return False
+    return True
+
+def main_chat():
+    st.title("BEST AND ONLY FRIEND")
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = [{"role": "system", "content": "AI"}]
+    if "pdf_contents" not in st.session_state:
+        st.session_state.pdf_contents = {}
+
+    uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
+    if uploaded_file is not None:
+        file_path = os.path.join(SAVE_DIR, uploaded_file.name)
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
         
-        response = completion.choices[0].message.content
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        log_to_file("assistant", response)
+        try:
+            pdf_reader = PyPDF2.PdfReader(uploaded_file)
+            pdf_text = ""
+            for page in pdf_reader.pages:
+                extracted_text = page.extract_text()
+                if extracted_text:
+                    pdf_text += extracted_text + "\n"
+            if not pdf_text:
+                pdf_text = "No text could be extracted from the PDF."
+            
+            st.session_state.pdf_contents[uploaded_file.name] = pdf_text
+            st.write(f"PDF '{uploaded_file.name}' uploaded successfully.")
+        except Exception as e:
+            st.error(f"Error processing PDF: {str(e)}")
+
+    for message in st.session_state.messages[1:]:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("Type your message here..."):
+        if prompt.strip().upper() == "STOPP":
+            st.warning("Program stopping...")
+            st.stop()
+            sys.exit(0)
+
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        log_to_file("user", prompt)
         
-        with st.chat_message("assistant"):
-            st.markdown(response)
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        try:
+            with st.spinner("Thinking..."):
+                chat_history = read_chat_history()
+                
+                if st.session_state.pdf_contents:
+                    combined_pdf_content = "\n\n".join(
+                        f"Content from {filename}:\n{content}"
+                        for filename, content in st.session_state.pdf_contents.items()
+                    )
+                else:
+                    combined_pdf_content = "No PDFs uploaded yet."
+                
+                system_prompt = (
+                    "You are an AI designed to assist users by leveraging past conversations and uploaded PDF content. "
+                    "Use the chat history from 'chat_log.txt' and the content of uploaded PDFs to provide informed, context-aware responses. "
+                    "If the user requests summaries, comparisons, or insights, analyze the available data accordingly. "
+                    "Always prioritize accuracy and relevance based on the provided context.\n\n"
+                    f"Previous Chat History (from chat_log.txt):\n{chat_history[-2000:]}\n\n"
+                    f"PDF Content (from uploaded_pdfs):\n{combined_pdf_content[-4000:]}"
+                )
+                st.session_state.messages[0] = {"role": "system", "content": system_prompt}
+                
+                completion = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=st.session_state.messages,
+                    temperature=0.7,
+                    max_tokens=1500
+                )
+            
+            response = completion.choices[0].message.content
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            log_to_file("assistant", response)
+            
+            with st.chat_message("assistant"):
+                st.markdown(response)
 
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
 
-if st.button("Clear Chat"):
-    st.session_state.messages = [{"role": "system", "content": "AI"}]
-    st.write("Chat cleared in memory, but logs and PDFs are preserved.")
-    st.rerun()
+    if st.button("Clear Chat"):
+        st.session_state.messages = [{"role": "system", "content": "AI"}]
+        st.write("Chat cleared in memory, but logs and PDFs are preserved.")
+        st.rerun()
 
-if st.button("Show Full Chat Log"):
-    full_log = read_chat_history()
-    st.text_area("Full Chat History", full_log, height=300)
+    if st.button("Show Full Chat Log"):
+        full_log = read_chat_history()
+        st.text_area("Full Chat History", full_log, height=300)
+
+if __name__ == "__main__":
+    if check_login():
+        main_chat()
