@@ -6,18 +6,18 @@ import sys
 import PyPDF2
 from datetime import datetime
 
-load_dotenv()
+load_dotenv() # env file
 api_key = os.getenv("AZURE_AI_API_KEY")
 VALID_USERNAME = os.getenv("VALID_USERNAME")
 VALID_PASSWORD = os.getenv("VALID_PASSWORD")
 
-client = OpenAI(
+client = OpenAI( 
     base_url="https://models.inference.ai.azure.com",
     api_key=api_key
-)
+) # connection with AI
 
-SAVE_DIR = "uploaded_pdfs"
-LOG_FILE = "chat_log.txt"
+SAVE_DIR = "uploaded_pdfs" #where to put .pdf`s`
+LOG_FILE = "chat_log.txt" # chatlog
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
@@ -33,17 +33,17 @@ def read_chat_history():
             return f.read()
     return "No previous chat history available."
 
-def check_login():
+def check_login(): #login
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
     
     if not st.session_state.logged_in:
         st.title("Login to Chat Bot")
         
-        username = st.text_input("Username")
+        username = st.text_input("Username") 
         password = st.text_input("Password", type="password")
         
-        if st.button("Login"):
+        if st.button("Login"): #hidded
             if username == VALID_USERNAME and password == VALID_PASSWORD:
                 st.session_state.logged_in = True
                 st.success("Logged in successfully!")
