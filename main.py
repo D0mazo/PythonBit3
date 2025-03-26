@@ -87,10 +87,9 @@ def main_chat():
             st.markdown(message["content"])
 
     if prompt := st.chat_input("Type your message here..."):
-        if prompt.strip().upper() == "STOPP":
-            st.warning("Program stopping...")
-            st.stop()
-            sys.exit(0)
+       if prompt.strip().upper() == "STOPP":
+        st.warning("Program stopping...")
+        sys.exit(0)  # Fully terminates the program
 
         st.session_state.messages.append({"role": "user", "content": prompt})
         log_to_file("user", prompt)
