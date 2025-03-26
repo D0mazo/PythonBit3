@@ -38,7 +38,7 @@ def check_login(): #login
         st.session_state.logged_in = False
     
     if not st.session_state.logged_in:
-        st.title("Login to Chat Bot")
+        st.title("Be friends?")
         
         username = st.text_input("Username") 
         password = st.text_input("Password", type="password")
@@ -54,7 +54,7 @@ def check_login(): #login
     return True
 
 def main_chat():
-    st.title("BEST AND ONLY FRIEND")
+    st.title("BEST Friend")
 
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "system", "content": "AI"}]
