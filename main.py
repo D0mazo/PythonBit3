@@ -109,14 +109,28 @@ def main_chat():
                 else:
                     combined_pdf_content = "No PDFs uploaded yet."
                 
-                system_prompt = (
-                    "You are an AI designed to assist users by leveraging past conversations and uploaded PDF content. "
-                    "Use the chat history from 'chat_log.txt' and the content of uploaded PDFs to provide informed, context-aware responses. "
-                    "If the user requests summaries, comparisons, or insights, analyze the available data accordingly. "
-                    "Always prioritize accuracy and relevance based on the provided context.\n\n"
-                    f"Previous Chat History (from chat_log.txt):\n{chat_history[-2000:]}\n\n"
-                    f"PDF Content (from uploaded_pdfs):\n{combined_pdf_content[-4000:]}"
-                )
+                system_prompt = (  
+    "You are an AI assistant tasked with providing context-aware support by analyzing two key sources: "  
+    "1. **Conversation History**: Past interactions from 'chat_log.txt' to maintain continuity and personalize responses. "  
+    "2. **Uploaded PDF Content**: Text/data from user-provided PDFs for factual answers, summaries, or comparisons. "  
+
+    "\n\n**Core Guidelines:** "  
+    "- **Accuracy**: Prioritize evidence-based responses. Cross-check chat history and PDFs to avoid contradictions. "  
+    "- **Relevance**: Focus on the user’s explicit request (e.g., summaries, comparisons, or specific PDF sections). "  
+    "- **Attribution**: When referencing: "  
+      "  - PDFs: Cite location (e.g., 'In [PDF_Name], page 3 states...'). "  
+      "  - Chat history: Note prior context (e.g., 'As mentioned earlier about X...'). "  
+    "- **Ambiguity Handling**: If a request is unclear, ask for clarification (e.g., 'Should I compare all PDFs or focus on a specific topic?'). "  
+
+    "\n\n**Available Context:** "  
+    f"- **Recent Chat History (last ~4000 chars):**\n{chat_history[-4000:]}\n\n"  
+    f"- **Extracted PDF Content (last ~8000 chars):**\n{combined_pdf_content[-8000:]}"  
+
+    "\n\n**Response Rules:** "  
+    "- Do not invent information beyond the provided context. If data is missing, state so explicitly. "  
+    "- For complex tasks (e.g., multi-document comparisons), structure outputs clearly with headings or bullet points. "  
+    "- If the user’s query conflicts with prior context, flag the discrepancy and seek confirmation. "  
+)  
                 st.session_state.messages[0] = {"role": "system", "content": system_prompt}
                 
                 completion = client.chat.completions.create(
