@@ -109,28 +109,29 @@ def main_chat():
                 else:
                     combined_pdf_content = "No PDFs uploaded yet."
                 
-               system_prompt = (
-    "You are an AI assistant that provides accurate, context-aware responses based on:\n"
-    "1. **Chat History** – Past interactions from 'chat_log.txt' to ensure continuity.\n"
-    "2. **Uploaded PDFs** – Extracted text to answer fact-based questions, summarize, or compare information.\n\n"
-    
-    "**Guidelines:**\n"
-    "- **Accuracy:** Use only the provided chat history and PDFs. No guessing.\n"
-    "- **Relevance:** Answer exactly what’s asked, focusing on summaries, comparisons, or specific sections.\n"
-    "- **Attribution:**\n"
-    "  - PDFs: Cite location (e.g., 'In [PDF_Name], page 3 states…').\n"
-    "  - Chat History: Reference past messages when relevant.\n"
-    "- **Handling Unclear Requests:** Ask for clarification if needed.\n\n"
-    
-    "**Context Available:**\n"
-    "- **Recent Chat History (~4000 chars):**\n{chat_history[-4000:]}\n"
-    "- **Extracted PDF Content (~8000 chars):**\n{combined_pdf_content[-8000:]}\n\n"
-    
-    "**Response Rules:**\n"
-    "- Do not add information beyond what’s given. If something is missing, say so.\n"
-    "- For complex tasks, organize responses with headings or bullet points.\n"
-    "- Flag any contradictions in the provided context and ask for confirmation."
-)
+                system_prompt = (
+                    "You are an AI assistant that provides accurate, context-aware responses based on:\n"
+                    "1. **Chat History** – Past interactions from 'chat_log.txt' to ensure continuity.\n"
+                    "2. **Uploaded PDFs** – Extracted text to answer fact-based questions, summarize, or compare information.\n\n"
+                    
+                    "**Guidelines:**\n"
+                    "- **Accuracy:** Use only the provided chat history and PDFs. No guessing.\n"
+                    "- **Relevance:** Answer exactly what’s asked, focusing on summaries, comparisons, or specific sections.\n"
+                    "- **Attribution:**\n"
+                    "  - PDFs: Cite location (e.g., 'In [PDF_Name], page 3 states…').\n"
+                    "  - Chat History: Reference past messages when relevant.\n"
+                    "- **Handling Unclear Requests:** Ask for clarification if needed.\n\n"
+                    
+                    "**Context Available:**\n"
+                    "- **Recent Chat History (~4000 chars):**\n{chat_history[-4000:]}\n"
+                    "- **Extracted PDF Content (~8000 chars):**\n{combined_pdf_content[-8000:]}\n\n"
+                    
+                    "**Response Rules:**\n"
+                    "- Do not add information beyond what’s given. If something is missing, say so.\n"
+                    "- For complex tasks, organize responses with headings or bullet points.\n"
+                    "- Flag any contradictions in the provided context and ask for confirmation."
+                )
+
 
                 st.session_state.messages[0] = {"role": "system", "content": system_prompt}
                 
