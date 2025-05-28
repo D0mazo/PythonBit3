@@ -19,7 +19,7 @@ client = OpenAI(
 SAVE_DIR = "uploaded_pdfs" #where to put .pdf`s`
 LOG_FILE = "chat_log.txt" # chatlog
 if not os.path.exists(SAVE_DIR):
-    os.makedirs(SAVE_DIR)
+    os.makedirs(SAVE_DIR)//should work
 
 def log_to_file(role, content):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
